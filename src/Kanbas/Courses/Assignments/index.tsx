@@ -1,5 +1,5 @@
 import { BsGripVertical} from 'react-icons/bs';
-import { FaCaretDown } from 'react-icons/fa'; //
+import { FaCaretDown, FaTrash } from 'react-icons/fa'; //
 import AssignmentControls from './AssignmentControls';
 import AssignmentControlButtons from './AssignmentControlButtons';
 import AssignmentButtons from './AssignmentButtons';
@@ -7,10 +7,32 @@ import { MdOutlineAssignment } from "react-icons/md";
 import { useParams } from "react-router";
 import * as db from "../../Database";
 import { Link } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { Key, ReactElement, JSXElementConstructor, ReactNode, ReactPortal, useState } from 'react';
+import { deleteAssignment } from "./reducer";
 
 export default function Assignments() {
     const { cid } = useParams();
-    const assignments = db.assignments.filter(assignment => assignment.course === cid);
+    const dispatch = useDispatch();
+    const assignments = useSelector((state: any) =>
+        state.assignmentsReducer.assignments.filter((assignment: { course: string | undefined; }) => assignment.course === cid)
+    );
+    const [assignmentToDelete, setAssignmentToDelete] = useState<string | null>(null);
+
+    const confirmDelete = (assignmentId: string) => {
+        setAssignmentToDelete(assignmentId);
+    };
+
+    const handleDeleteConfirm = () => {
+        if (assignmentToDelete) {
+        dispatch(deleteAssignment(assignmentToDelete));
+        setAssignmentToDelete(null);
+        }
+    };
+
+    const handleDeleteCancel = () => {
+        setAssignmentToDelete(null);
+    };
     return (
         <div className="container mt-3">
             < AssignmentControls /><br /><br /><br /><br />
@@ -23,7 +45,7 @@ export default function Assignments() {
               <AssignmentControlButtons />
               </div>
               <ul className="wd-lessons list-group rounded-0">
-                        {assignments.map(assignment => (
+                        {assignments.map((assignment: any) => (
                             <li key={assignment._id} className="wd-lesson list-group-item p-3 ps-1">
                                 <div className="d-flex">
                                     <div className="d-flex align-items-center">
@@ -47,7 +69,10 @@ export default function Assignments() {
                                         </div>
                                     </div>
                                     <div className="d-flex align-items-center">
-                                        <AssignmentButtons />
+                                        <AssignmentButtons 
+                                        assignmentId={assignment._id}
+                                        deleteAssignment={confirmDelete}
+                                        />
                                     </div>
                                 </div>
                             </li>
@@ -55,6 +80,29 @@ export default function Assignments() {
                     </ul>
                 </li>
             </ul>
+            {assignmentToDelete && (
+                <div className="modal fade show" style={{ display: "block" }} tabIndex={-1}>
+                <div className="modal-dialog">
+                    <div className="modal-content">
+                    <div className="modal-header">
+                        <h5 className="modal-title">Delete Assignment</h5>
+                        <button type="button" className="btn-close" onClick={handleDeleteCancel}></button>
+                    </div>
+                    <div className="modal-body">
+                        <p>Are you sure you want to delete this assignment?</p>
+                    </div>
+                    <div className="modal-footer">
+                        <button className="btn btn-secondary" onClick={handleDeleteCancel}>
+                        NO
+                        </button>
+                        <button className="btn btn-danger" onClick={handleDeleteConfirm}>
+                        YES
+                        </button>
+                    </div>
+                    </div>
+                </div>
+                </div>
+            )}
         </div>
     );
 }
