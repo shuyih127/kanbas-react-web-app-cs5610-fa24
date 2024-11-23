@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addAssignment, updateAssignment } from "./reducer";
 import { useState, useEffect } from "react";
+import * as assignmentClient from "./client";
 
 export default function AssignmentEditor() {
   const { cid, aid } = useParams();
@@ -11,7 +12,9 @@ export default function AssignmentEditor() {
   const isNewAssignment = aid === "new";
 
   const assignment = useSelector((state: any) =>
-    state.assignmentsReducer.assignments.find((assignment: { _id: string | undefined; }) => assignment._id === aid)
+    state.assignmentsReducer.assignments.find(
+      (assignment: { _id: string | undefined }) => assignment._id === aid
+    )
   );
 
   const [title, setTitle] = useState("");
@@ -38,17 +41,19 @@ export default function AssignmentEditor() {
       setAvailableFrom(assignment.availableFrom || "");
       setAvailableUntil(assignment.availableUntil || "");
       setSubmissionType(assignment.submissionType || "online");
-      setOnlineEntryOptions(assignment.onlineEntryOptions || {
-        textEntry: false,
-        websiteUrl: true,
-        mediaRecordings: false,
-        studentAnnotation: false,
-        fileUpload: false,
-      });
+      setOnlineEntryOptions(
+        assignment.onlineEntryOptions || {
+          textEntry: false,
+          websiteUrl: true,
+          mediaRecordings: false,
+          studentAnnotation: false,
+          fileUpload: false,
+        }
+      );
     }
   }, [isNewAssignment, assignment]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const updatedAssignment = {
       _id: isNewAssignment ? new Date().getTime().toString() : assignment._id,
       title,
@@ -63,9 +68,15 @@ export default function AssignmentEditor() {
     };
 
     if (isNewAssignment) {
-      dispatch(addAssignment(updatedAssignment));
+      const savedAssignment = await assignmentClient.createAssignment(
+        updatedAssignment
+      );
+      dispatch(addAssignment(savedAssignment));
     } else {
-      dispatch(updateAssignment(updatedAssignment));
+      const updatedAssignmentResponse = await assignmentClient.updateAssignment(
+        updatedAssignment
+      );
+      dispatch(updateAssignment(updatedAssignmentResponse));
     }
 
     navigate(`/Kanbas/Courses/${cid}/Assignments`);
@@ -78,7 +89,9 @@ export default function AssignmentEditor() {
   return (
     <div id="wd-assignments-editor" className="container mt-4">
       <div className="mb-3">
-        <label htmlFor="wd-name" className="form-label">Assignment Name</label>
+        <label htmlFor="wd-name" className="form-label">
+          Assignment Name
+        </label>
         <input
           id="wd-name"
           className="form-control"
@@ -91,15 +104,19 @@ export default function AssignmentEditor() {
         <textarea
           id="wd-description"
           className="form-control"
+          placeholder="Assignment description..."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
       </div>
 
       <div className="mb-3 col-md-4 d-flex align-items-center">
-        <label htmlFor="wd-points" className="form-label me-2">Points</label>
+        <label htmlFor="wd-points" className="form-label me-2">
+          Points
+        </label>
         <input
           id="wd-points"
+          type="number"
           className="form-control flex-grow-1"
           value={points}
           onChange={(e) => setPoints(e.target.value)}
@@ -107,21 +124,27 @@ export default function AssignmentEditor() {
       </div>
 
       <div className="mb-3 col-md-4 d-flex align-items-center">
-        <label htmlFor="wd-group" className="form-label me-2" style={{ whiteSpace: 'nowrap' }}>Assignment Group</label>
+        <label htmlFor="wd-group" className="form-label me-2" style={{ whiteSpace: "nowrap" }}>
+          Assignment Group
+        </label>
         <select id="wd-group" className="form-select flex-grow-1" defaultValue="assignments" disabled>
           <option value="assignments">ASSIGNMENTS</option>
         </select>
       </div>
 
       <div className="mb-3 col-md-4 d-flex align-items-center">
-        <label htmlFor="wd-display-grade-as" className="form-label me-2" style={{ whiteSpace: 'nowrap' }}>Display Grade as</label>
+        <label htmlFor="wd-display-grade-as" className="form-label me-2" style={{ whiteSpace: "nowrap" }}>
+          Display Grade as
+        </label>
         <select id="wd-display-grade-as" className="form-select flex-grow-1" defaultValue="percentage" disabled>
           <option value="percentage">Percentage</option>
         </select>
       </div>
 
       <div className="mb-3 d-flex">
-        <label htmlFor="wd-submission-type" className="form-label me-2">Submission Type</label>
+        <label htmlFor="wd-submission-type" className="form-label me-2">
+          Submission Type
+        </label>
         <div className="card" style={{ width: "19rem" }}>
           <div className="mb-2 p-2 d-flex col-md-6">
             <select
@@ -135,26 +158,56 @@ export default function AssignmentEditor() {
           </div>
 
           <div className="mb-2 p-2 col-md-6">
-            <label className="form-label mt-2" style={{ whiteSpace: 'nowrap' }}>Online Entry Options</label>
+            <label className="form-label mt-2" style={{ whiteSpace: "nowrap" }}>
+              Online Entry Options
+            </label>
             <div className="form-check">
               <input
                 type="checkbox"
                 id="wd-text-entry"
                 className="form-check-input"
                 checked={onlineEntryOptions.textEntry}
-                onChange={(e) => setOnlineEntryOptions({ ...onlineEntryOptions, textEntry: e.target.checked })}
+                onChange={(e) =>
+                  setOnlineEntryOptions({
+                    ...onlineEntryOptions,
+                    textEntry: e.target.checked,
+                  })
+                }
               />
-              <label className="form-check-label" htmlFor="wd-text-entry">Text Entry</label>
+              <label className="form-check-label" htmlFor="wd-text-entry">
+                Text Entry
+              </label>
+            </div>
+            <div className="form-check">
+              <input
+                type="checkbox"
+                id="wd-website-url"
+                className="form-check-input"
+                checked={onlineEntryOptions.websiteUrl}
+                onChange={(e) =>
+                  setOnlineEntryOptions({
+                    ...onlineEntryOptions,
+                    websiteUrl: e.target.checked,
+                  })
+                }
+              />
+              <label className="form-check-label" htmlFor="wd-website-url">
+                Website URL
+              </label>
             </div>
           </div>
         </div>
       </div>
 
       <div className="mb-3 d-flex">
-        <label htmlFor="wd-assign-to" className="form-label me-2">Assign</label>
+        <label htmlFor="wd-assign-to" className="form-label me-2">
+          Assign
+        </label>
         <div className="card" style={{ width: "30rem" }}>
           <div className="mb-2">
-            <label htmlFor="wd-due-date" className="form-label mb-2">Due</label>
+            <label htmlFor="wd-due-date" className="form-label mb-2">
+              Due
+            </label>
             <input
               id="wd-due-date"
               type="date"
@@ -165,7 +218,9 @@ export default function AssignmentEditor() {
           </div>
           <div className="row">
             <div className="col">
-              <label htmlFor="wd-available-from" className="form-label mb-2">Available from</label>
+              <label htmlFor="wd-available-from" className="form-label mb-2">
+                Available from
+              </label>
               <input
                 id="wd-available-from"
                 type="date"
@@ -175,7 +230,9 @@ export default function AssignmentEditor() {
               />
             </div>
             <div className="col">
-              <label htmlFor="wd-available-until" className="form-label mb-2">Until</label>
+              <label htmlFor="wd-available-until" className="form-label mb-2">
+                Until
+              </label>
               <input
                 id="wd-available-until"
                 type="datetime-local"
@@ -189,8 +246,12 @@ export default function AssignmentEditor() {
       </div>
 
       <div className="d-flex justify-content-end mt-4">
-        <button onClick={handleCancel} className="btn btn-secondary me-2">Cancel</button>
-        <button onClick={handleSave} className="btn btn-danger">Save</button>
+        <button onClick={handleCancel} className="btn btn-secondary me-2">
+          Cancel
+        </button>
+        <button onClick={handleSave} className="btn btn-danger">
+          Save
+        </button>
       </div>
     </div>
   );
