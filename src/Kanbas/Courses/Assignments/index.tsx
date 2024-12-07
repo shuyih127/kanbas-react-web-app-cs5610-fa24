@@ -33,7 +33,7 @@ export default function Assignments() {
     useEffect(() => {
       const fetchAssignments = async () => {
         if (cid) {
-          const assignments = await assignmentClient.getAssignments();
+          const assignments = await assignmentClient.getAssignmentsForCourse(cid);
           dispatch(setAssignments(assignments));
         }
       };
