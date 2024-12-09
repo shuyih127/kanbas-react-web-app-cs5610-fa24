@@ -55,4 +55,12 @@ export const deleteQuestion = async (questionId: string) => {
   return data;
 };
 
+export const getFacultyResponses = async (quizId: string) => {
+  const response = await axiosWithCredentials.get(`/api/quizzes/${quizId}/faculty-responses`);
+  return response.data;
+};
 
+export const saveFacultyResponses = async (quizId: string, data: any) => {
+  const response = await axiosWithCredentials.post(`/api/quizzes/${quizId}/faculty-responses`, data);
+  return response.data;
+};

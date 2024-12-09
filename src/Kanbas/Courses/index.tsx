@@ -10,6 +10,7 @@ import PeopleForCourse from "./People/PeopleForCourse"
 import Quizzes from "./Quizzes";
 import QuizDetails from "./Quizzes/QuizDetails";
 import QuizEditor from "./Quizzes/QuizEditor";
+import QuizPreview from "./Quizzes/QuizPreview";
 
 
 export default function Courses({ courses }: { courses: any[]; }) {
@@ -36,6 +37,7 @@ export default function Courses({ courses }: { courses: any[]; }) {
                 <Route path="Quizzes" element={<Quizzes />} />
                 <Route path="Quizzes/:quizId" element={<QuizDetails />} />
                 <Route path="Quizzes/:quizId/edit" element={<QuizEditor />} />
+                <Route path="Quizzes/:quizId/preview" element={<QuizPreview />} />
             </Routes>
             </div></div>
         </div>
