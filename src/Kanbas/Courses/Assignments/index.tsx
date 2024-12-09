@@ -1,5 +1,5 @@
 import { BsGripVertical} from 'react-icons/bs';
-import { FaCaretDown, FaTrash } from 'react-icons/fa'; //
+import { FaCaretDown, FaTrash } from 'react-icons/fa'; 
 import AssignmentControls from './AssignmentControls';
 import AssignmentControlButtons from './AssignmentControlButtons';
 import AssignmentButtons from './AssignmentButtons';
