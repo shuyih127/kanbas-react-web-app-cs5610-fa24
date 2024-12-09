@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 
 export default function MultipleChoiceEditor({ question, onSave, onCancel }: any) {
-  const [currentQuestion, setCurrentQuestion] = useState(question);
+  const [currentQuestion, setCurrentQuestion] = useState({
+    ...question,
+    choices: question.choices || [{ text: "", isCorrect: false }],
+  });
 
   const handleChoiceChange = (index: number, value: any) => {
     const newChoices = [...currentQuestion.choices];
@@ -23,6 +26,13 @@ export default function MultipleChoiceEditor({ question, onSave, onCancel }: any
 
   const handleChange = (field: string, value: any) => {
     setCurrentQuestion((prev: any) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = () => {
+    const correctAnswers = currentQuestion.choices
+      .filter((choice: { isCorrect: any; }) => choice.isCorrect)
+      .map((choice: { text: any; }) => choice.text);
+    onSave({ ...currentQuestion, correctAnswers });
   };
 
   return (
@@ -91,7 +101,7 @@ export default function MultipleChoiceEditor({ question, onSave, onCancel }: any
         <button className="btn btn-secondary me-2" onClick={onCancel}>
           Cancel
         </button>
-        <button className="btn btn-primary" onClick={() => onSave(currentQuestion)}>
+        <button className="btn btn-primary" onClick={handleSave}>
           Save Question
         </button>
       </div>

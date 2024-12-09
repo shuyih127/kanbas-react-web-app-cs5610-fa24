@@ -1,10 +1,17 @@
 import React, { useState } from "react";
 
 export default function TrueFalseEditor({ question, onSave, onCancel }: any) {
-  const [currentQuestion, setCurrentQuestion] = useState(question);
+  const [currentQuestion, setCurrentQuestion] = useState({
+    ...question,
+    correctAnswer: question.correctAnswer || "true",
+  });
 
   const handleChange = (field: string, value: any) => {
     setCurrentQuestion((prev: any) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = () => {
+    onSave({ ...currentQuestion, correctAnswers: [currentQuestion.correctAnswer] });
   };
 
   return (
@@ -66,7 +73,7 @@ export default function TrueFalseEditor({ question, onSave, onCancel }: any) {
         <button className="btn btn-secondary me-2" onClick={onCancel}>
           Cancel
         </button>
-        <button className="btn btn-primary" onClick={() => onSave(currentQuestion)}>
+        <button className="btn btn-primary" onClick={handleSave}>
           Save Question
         </button>
       </div>

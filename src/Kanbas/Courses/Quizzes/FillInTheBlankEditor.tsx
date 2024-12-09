@@ -3,29 +3,46 @@ import React, { useState } from "react";
 export default function FillInTheBlankEditor({ question, onSave, onCancel }: any) {
   const [currentQuestion, setCurrentQuestion] = useState({
     ...question,
-    answers: question.answers || [], 
+    correctAnswers: question.correctAnswers || [],
   });
 
   const handleAnswerChange = (index: number, value: string) => {
-    const newAnswers = [...currentQuestion.answers];
+    const newAnswers = [...currentQuestion.correctAnswers];
     newAnswers[index] = value;
-    setCurrentQuestion({ ...currentQuestion, answers: newAnswers });
+    setCurrentQuestion({ ...currentQuestion, correctAnswers: newAnswers });
   };
 
   const handleAddAnswer = () => {
     setCurrentQuestion({
       ...currentQuestion,
-      answers: [...(currentQuestion.answers || []), ""],
+      correctAnswers: [...(currentQuestion.correctAnswers || []), ""],
     });
   };
 
   const handleRemoveAnswer = (index: number) => {
-    const newAnswers = currentQuestion.answers.filter((_: any, i: number) => i !== index);
-    setCurrentQuestion({ ...currentQuestion, answers: newAnswers });
+    const newAnswers = currentQuestion.correctAnswers.filter(
+      (_: any, i: number) => i !== index
+    );
+    setCurrentQuestion({ ...currentQuestion, correctAnswers: newAnswers });
   };
 
   const handleChange = (field: string, value: any) => {
     setCurrentQuestion((prev: any) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = () => {
+    const questionToSave = {
+      ...currentQuestion,
+      correctAnswers: currentQuestion.correctAnswers.filter(
+        (answer: string) => answer.trim() !== ""
+      ),
+    };
+
+    if (!questionToSave.correctAnswers.length) {
+      return;
+    }
+
+    onSave(questionToSave);
   };
 
   return (
@@ -59,8 +76,8 @@ export default function FillInTheBlankEditor({ question, onSave, onCancel }: any
         ></textarea>
       </div>
       <div className="mb-3">
-        <label className="form-label">Possible Answers</label>
-        {(currentQuestion.answers || []).map((answer: string, index: number) => (
+        <label className="form-label">Correct Answers</label>
+        {currentQuestion.correctAnswers.map((answer: string, index: number) => (
           <div key={index} className="d-flex align-items-center mb-2">
             <input
               type="text"
@@ -84,7 +101,7 @@ export default function FillInTheBlankEditor({ question, onSave, onCancel }: any
         <button className="btn btn-secondary me-2" onClick={onCancel}>
           Cancel
         </button>
-        <button className="btn btn-primary" onClick={() => onSave(currentQuestion)}>
+        <button className="btn btn-primary" onClick={handleSave}>
           Save Question
         </button>
       </div>
