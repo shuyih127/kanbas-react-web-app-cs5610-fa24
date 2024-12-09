@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import * as quizClient from "./client";
+import QuizQuestionsEditor from "./QuizQuestionsEditor";
 
 export default function QuizEditor() {
   const { cid, quizId } = useParams();
@@ -26,6 +27,19 @@ export default function QuizEditor() {
   });
 
   const [activeTab, setActiveTab] = useState<"Details" | "Questions">("Details");
+
+  const [questions, setQuestions] = useState<any[]>([]);
+
+  const addNewQuestion = () => {
+    const newQuestion = {
+      id: Date.now(), 
+      questionText: "",
+      type: "Multiple Choice",
+      points: 1,
+      editing: true,
+    };
+    setQuestions([...questions, newQuestion]);
+  };
 
   useEffect(() => {
     const fetchQuiz = async () => {
@@ -54,6 +68,7 @@ export default function QuizEditor() {
   const handleChange = (field: string, value: any) => {
     setQuiz((prev: any) => ({ ...prev, [field]: value }));
   };
+
 
   return (
     <div className="container mt-3">
@@ -273,8 +288,7 @@ export default function QuizEditor() {
         </div>
       ) : (
         <div>
-          <h3>Questions Editor</h3>
-          
+            <QuizQuestionsEditor />
         </div>
       )}
 
