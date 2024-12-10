@@ -1,48 +1,46 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import * as quizClient from "./client";
+import { useParams } from "react-router-dom";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import * as quizClient from "./client";
 
-export default function QuizPreview() {
+export default function QuizStart() {
   const { quizId } = useParams();
-  const navigate = useNavigate();
 
   const [quiz, setQuiz] = useState<any>(null);
   const [responses, setResponses] = useState<any[]>([]);
   const [score, setScore] = useState<number | null>(null);
   const [lastScore, setLastScore] = useState<number | null>(null);
   const [lastAttempted, setLastAttempted] = useState<Date | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [quizStarted, setQuizStarted] = useState(false);
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchQuizAndQuestions = async () => {
+    const fetchQuizAndUserData = async () => {
       try {
-        if (quizId) {
-          const profile = await quizClient.getProfile();
-          setUserId(profile._id);
+        const profile = await quizClient.getProfile();
+        setUserId(profile._id);
 
-          const fetchedQuiz = await quizClient.getQuizById(quizId);
-          const fetchedQuestions = await quizClient.getQuestionsForQuiz(quizId);
+        const fetchedQuiz = await quizClient.getQuizById(quizId!);
+        const fetchedQuestions = await quizClient.getQuestionsForQuiz(quizId!);
 
-          setQuiz({ ...fetchedQuiz, questions: fetchedQuestions });
+        setQuiz({ ...fetchedQuiz, questions: fetchedQuestions });
 
-          // Fetch previous responses, score, and last attempted date
-          const storedData = localStorage.getItem(`${profile._id}_${quizId}`);
-          if (storedData) {
-            const parsedData = JSON.parse(storedData);
-            setResponses(parsedData.responses || []);
-            setLastScore(parsedData.score || null);
-            setScore(parsedData.score || null);
-            setLastAttempted(parsedData.lastAttempted ? new Date(parsedData.lastAttempted) : null);
-          }
+        const storedData = localStorage.getItem(`${profile._id}_${quizId}`);
+        if (storedData) {
+          const parsedData = JSON.parse(storedData);
+          setResponses(parsedData.responses || []);
+          setLastScore(parsedData.score || null);
+          setScore(parsedData.score || null);
+          setLastAttempted(parsedData.lastAttempted ? new Date(parsedData.lastAttempted) : null);
+          setQuizSubmitted(true); // If data exists, mark the quiz as submitted
         }
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching quiz data:", error);
       }
     };
 
-    fetchQuizAndQuestions();
+    fetchQuizAndUserData();
   }, [quizId]);
 
   const handleResponseChange = (questionId: string, answer: string) => {
@@ -59,26 +57,6 @@ export default function QuizPreview() {
     });
   };
 
-  const handleSubmit = () => {
-    if (!userId) {
-      return;
-    }
-
-    const calculatedScore = calculateScore(quiz.questions, responses);
-    setScore(calculatedScore);
-    setLastScore(calculatedScore);
-
-    const dataToSave = {
-      userId,
-      quizId,
-      responses,
-      score: calculatedScore,
-      lastAttempted: new Date(),
-    };
-    localStorage.setItem(`${userId}_${quizId}`, JSON.stringify(dataToSave));
-    setLastAttempted(new Date());
-  };
-
   const calculateScore = (questions: any[], responses: any[]) => {
     let totalScore = 0;
     questions.forEach((question) => {
@@ -90,12 +68,34 @@ export default function QuizPreview() {
     return totalScore;
   };
 
+  const handleSubmit = () => {
+    if (!userId || !quiz) return;
+
+    const calculatedScore = calculateScore(quiz.questions, responses);
+    setScore(calculatedScore);
+    setLastScore(calculatedScore);
+
+    // Save data to local storage
+    const dataToSave = {
+      userId,
+      quizId,
+      responses,
+      score: calculatedScore,
+      lastAttempted: new Date(),
+    };
+    localStorage.setItem(`${userId}_${quizId}`, JSON.stringify(dataToSave));
+    setLastAttempted(new Date());
+    setQuizSubmitted(true);
+  };
+
   const startQuiz = () => {
     setQuizStarted(true);
+    setQuizSubmitted(false); 
+    setResponses([]); 
   };
 
   if (!quiz) {
-    return <div>No quiz found</div>;
+    return <div>Error</div>;
   }
 
   return (
@@ -104,21 +104,14 @@ export default function QuizPreview() {
       <p>{quiz.description}</p>
       <div className="d-flex justify-content-between align-items-center">
         {!quizStarted && (
-          <button
-            className="btn btn-secondary"
-            onClick={() => navigate(`/Kanbas/Courses/${quiz.courseId}/Quizzes/${quizId}/edit`)}
-          >
-            Edit Quiz
-          </button>
-        )}
-        {!quizStarted && (
           <button className="btn btn-primary" onClick={startQuiz}>
             Start Quiz
           </button>
         )}
         {lastAttempted && (
           <p>
-            Last Attempt: {lastAttempted.toLocaleDateString()} at {lastAttempted.toLocaleTimeString()} | Last Score: {lastScore || 0}
+            Last Attempt: {lastAttempted.toLocaleDateString()} at {lastAttempted.toLocaleTimeString()} | Last Score:{" "}
+            {lastScore !== null ? lastScore : 0}
           </p>
         )}
       </div>
@@ -140,8 +133,8 @@ export default function QuizPreview() {
                       name={`question-${question._id}`}
                       value={choice.text}
                       checked={responses.find((r) => r.questionId === question._id)?.answer === choice.text}
-                      onChange={(e) => quizStarted && handleResponseChange(question._id, e.target.value)}
-                      disabled={!quizStarted}
+                      onChange={(e) => !quizSubmitted && handleResponseChange(question._id, e.target.value)}
+                      disabled={quizSubmitted}
                     />
                     <label className="form-check-label">{choice.text}</label>
                   </div>
@@ -157,8 +150,8 @@ export default function QuizPreview() {
                     name={`question-${question._id}`}
                     value="true"
                     checked={responses.find((r) => r.questionId === question._id)?.answer === "true"}
-                    onChange={(e) => quizStarted && handleResponseChange(question._id, "true")}
-                    disabled={!quizStarted}
+                    onChange={() => !quizSubmitted && handleResponseChange(question._id, "true")}
+                    disabled={quizSubmitted}
                   />
                   <label className="form-check-label">True</label>
                 </div>
@@ -169,8 +162,8 @@ export default function QuizPreview() {
                     name={`question-${question._id}`}
                     value="false"
                     checked={responses.find((r) => r.questionId === question._id)?.answer === "false"}
-                    onChange={(e) => quizStarted && handleResponseChange(question._id, "false")}
-                    disabled={!quizStarted}
+                    onChange={() => !quizSubmitted && handleResponseChange(question._id, "false")}
+                    disabled={quizSubmitted}
                   />
                   <label className="form-check-label">False</label>
                 </div>
@@ -181,29 +174,29 @@ export default function QuizPreview() {
                 type="text"
                 className="form-control"
                 value={responses.find((r) => r.questionId === question._id)?.answer || ""}
-                onChange={(e) => quizStarted && handleResponseChange(question._id, e.target.value)}
-                disabled={!quizStarted}
+                onChange={(e) => !quizSubmitted && handleResponseChange(question._id, e.target.value)}
+                disabled={quizSubmitted}
               />
             )}
-            {quizStarted &&
-                  (question.correctAnswers.includes(
-                    responses.find((r) => r.questionId === question._id)?.answer || ""
-                  ) ? (
-                    <FaCheckCircle color="green" size={20} />
-                  ) : (
-                    <FaTimesCircle color="red" size={20} />
-            ))}
+            {quizSubmitted && (
+              <div className="mt-2">
+                {responses.find((r) => r.questionId === question._id)?.answer === question.correctAnswers[0] ? (
+                  <FaCheckCircle color="green"/>
+                ) : (
+                  <FaTimesCircle color="red"/>
+                )}
+              </div>
+            )}
           </div>
         ))
       ) : (
         <p>No questions.</p>
       )}
-      {quizStarted && (
+      {quizStarted && !quizSubmitted && (
         <div className="d-flex justify-content-between align-items-center mt-4">
           <button className="btn btn-primary" onClick={handleSubmit}>
             Submit Quiz
           </button>
-          {score !== null && <p>Your Score: {score}</p>}
         </div>
       )}
     </div>

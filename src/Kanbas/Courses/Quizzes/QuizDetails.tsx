@@ -43,7 +43,9 @@ export default function QuizDetails() {
             </button>
           </>
         ) : (
-          <button className="btn btn-primary">
+          <button className="btn btn-primary"
+            onClick={() => navigate(`./start`)}
+          >
             Start Quiz
           </button>
         )}

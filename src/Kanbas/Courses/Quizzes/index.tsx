@@ -38,7 +38,7 @@ export default function Quizzes() {
         points: 0,
         questions: [],
       });
-      navigate(`./${newQuiz._id}/edit`);
+      navigate(`./${newQuiz._id}`);
     }
   };
 
